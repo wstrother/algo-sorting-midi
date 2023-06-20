@@ -10,3 +10,11 @@ be imported into the DAW and post-processed with MIDI filters and other audio pr
 The general idea will be to specify some parameters such as the particular sorting algorithm, the size of the array, and particular
 guidelines for how the MIDI will be generated (potential for swing or other rhythmic transformations, as well as note mapping guidelines)
 and get a MIDI file as output that can be used as an element in music production.
+
+## Requirements
+
+* Python 3
+* MIDIUtil package
+```
+pip install MIDIUtil
+```

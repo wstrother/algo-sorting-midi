@@ -16,37 +16,72 @@ class NoteGenerator:
         
         self.midi = MIDIFile(1)
         self.midi.addTempo(0, 0, tempo)
+        
+        self.pattern = [
+            [1, 100]
+        ]
+        self.notes = []
+        self.scaling_factor = 1
+        self.modular_div = True
+        self.skip_rests = False
 
-    def get_pitch(self, value, step_number) -> float:
-        return value
-    
-    def get_duration(self, value, step_number) -> float:
-        return 1
-    
-    def get_volume(self, value, step_number) -> float:
-        return 50
+    def get_pattern_step(self, step_number) -> list:
+        return self.pattern[step_number % len(self.pattern)]
 
-    def get_delta_t(self, value, step_number) -> float:
-        return 1
+    def get_pitch(self, value) -> int:
+        if not self.notes:
+            return value
+        
+        value = int(value * self.scaling_factor)
+        
+        if self.modular_div:
+            value = value % len(self.notes)
+        
+        try:
+            return self.notes[value]
+        except IndexError:
+            return self.notes[-1]
+    
+    def get_duration(self, step_number) -> float:
+        step = self.get_pattern_step(step_number)
+        
+        return step[0]
+    
+    def get_volume(self, step_number) -> int:
+        step = self.get_pattern_step(step_number)
+        
+        return step[1]
+
+    def get_delta_t(self, step_number) -> float:
+        step = self.get_pattern_step(step_number)
+        
+        if len(step) == 2:
+            return step[0]
+        else:
+            return step[2]
 
     def process_step(self, value, step_number):
         # set defaults
         pitch, duration, volume = 0, 0, 0
         
         # if there is no index value in the step, consider it a rest
+        add_note = True
         rest = value is None
-        
-        # increment current time
-        self.current_t += self.get_delta_t(value, step_number) or 1
+        if rest and self.skip_rests:
+            add_note = False
         
         if not rest:
             # apply transformations
-            pitch = self.get_pitch(value, step_number) or pitch
-            duration = self.get_duration(value, step_number) or duration
-            volume = self.get_volume(value, step_number) or volume
+            pitch = self.get_pitch(value)
+            duration = self.get_duration(step_number)
+            volume = self.get_volume(step_number)
             
             # write midi note
             self.midi.addNote(0, 0, pitch, self.current_t, duration, volume)
+        
+        # increment current time
+        if add_note:
+            self.current_t += self.get_delta_t(step_number)
     
     def write_file(self, file_name):
         with open(file_name, "wb") as output_file:

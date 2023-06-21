@@ -1,3 +1,8 @@
+from io import StringIO
+import sys
+import csv
+
+
 WRITE = "write"
 READ = "read"
 COMPARE = "compare"
@@ -27,3 +32,27 @@ class LogList(list):
 
 def log_array(values):
     return LogList([LogInt(i) for i in values])
+
+def log_algorithm(arr, algorithm):
+    arr = log_array(arr)
+    
+    with StringIO() as step_data:
+        _print = sys.stdout
+        
+        sys.stdout = step_data
+        algorithm(arr)
+        sys.stdout = _print
+
+        return step_data.getvalue()
+
+def get_step_list(step_data):
+    steps = [] 
+            
+    for row in csv.reader(StringIO(step_data)):
+        try:
+            value = int(row[1])
+        except ValueError:
+            value = None
+        steps.append((row[0], value))
+
+    return steps

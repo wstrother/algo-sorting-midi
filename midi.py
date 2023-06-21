@@ -10,10 +10,12 @@ from midiutil import MIDIFile
 
 
 class NoteGenerator:
-    def __init__(self, *params) -> None:
-        self.current_time = 0
+    def __init__(self, default_t=1, tempo=120) -> None:
+        self.current_t = 0
+        self.default_t = default_t
+        
         self.midi = MIDIFile(1)
-        self.midi.addTempo(0, 0, 120)
+        self.midi.addTempo(0, 0, tempo)
 
     def get_pitch(self, value, step_number) -> float:
         return value
@@ -35,7 +37,7 @@ class NoteGenerator:
         rest = value is None
         
         # increment current time
-        self.current_time += self.get_delta_t(value, step_number) or 1
+        self.current_t += self.get_delta_t(value, step_number) or 1
         
         if not rest:
             # apply transformations
@@ -44,18 +46,17 @@ class NoteGenerator:
             volume = self.get_volume(value, step_number) or volume
             
             # write midi note
-            self.midi.addNote(0, 0, pitch, self.current_time, duration, volume)
+            self.midi.addNote(0, 0, pitch, self.current_t, duration, volume)
     
     def write_file(self, file_name):
         with open(file_name, "wb") as output_file:
             self.midi.writeFile(output_file)
     
-    @staticmethod
-    def create_midi(values, file_name, *params):
-        generator = NoteGenerator(*params)        
+    def create_midi(self, steps, file_name):
+        values = [step[1] for step in steps]
         
         for (step_number, value) in enumerate(values):
-            generator.process_step(value, step_number)
+            self.process_step(value, step_number)
         
-        generator.write_file(file_name)
+        self.write_file(file_name)
 

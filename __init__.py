@@ -1,7 +1,7 @@
-from logging import log_array
 from midi import NoteGenerator
-import sys
-import csv
+from log_algo import log_algorithm, get_step_list
+from io import StringIO
+
 
 def bubble_sort(arr):
     n = len(arr)
@@ -22,27 +22,14 @@ if __name__ == "__main__":
     # create a random array and prepare for logging
     from random import randint
     
-    arr = log_array([randint(0,999) for _ in range(4)])
-    
-    
-    # create the csv file for step data
-    _print = sys.stdout
-    with open('output.csv', 'w') as output:
-        sys.stdout = output
-        bubble_sort(arr)
-    sys.stdout = _print
-    
+    step_data = log_algorithm(
+        [randint(0,999) for _ in range(4)],
+        bubble_sort
+    )
+        
     # read the csv and convert to notes
-    with open('output.csv', 'r') as step_file:
-        steps = [] 
-               
-        for row in csv.reader(step_file):
-            try:
-                value = int(row[1])
-            except ValueError:
-                value = None
-            steps.append(value)
-            
-        NoteGenerator.create_midi(steps, 'output.mid')
+    steps = get_step_list(step_data)
     
-    # print(arr)
+    generator = NoteGenerator()
+    generator.create_midi(steps, 'output.mid')
+    
